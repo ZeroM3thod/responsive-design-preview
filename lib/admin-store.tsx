@@ -29,11 +29,19 @@ export type Payment = {
   submittedAt: string
 }
 
+export type CodeFile = {
+  id: string
+  name: string
+  code: string
+}
+
 export type AssetSubButton = {
   id: string
   name: string
+  icon: string
   previewLink: string
-  code: string
+  zipLink: string
+  codeFiles: CodeFile[]
   access: AccessLevel
 }
 
@@ -100,8 +108,16 @@ const seedAssets: AssetMainButton[] = [
       {
         id: "s1",
         name: "Brutal Button",
+        icon: "Square",
         previewLink: "https://hasandrone.vercel.app/",
-        code: `export function BrutalButton() {\n  return <button className="bg-foreground text-background px-4 py-2">Deploy</button>\n}`,
+        zipLink: "https://hasandrone.vercel.app/brutal-button.zip",
+        codeFiles: [
+          {
+            id: "cf1",
+            name: "brutal-button.tsx",
+            code: `export function BrutalButton() {\n  return <button className="bg-foreground text-background px-4 py-2">Deploy</button>\n}`,
+          },
+        ],
         access: "free",
       },
     ],
@@ -113,8 +129,16 @@ const seedAssets: AssetMainButton[] = [
       {
         id: "s2",
         name: "Glitch Text",
+        icon: "Sparkles",
         previewLink: "https://hasandrone.vercel.app/",
-        code: `export function GlitchText() {\n  return <span className="animate-glitch">SYS.INT</span>\n}`,
+        zipLink: "",
+        codeFiles: [
+          {
+            id: "cf2",
+            name: "glitch-text.tsx",
+            code: `export function GlitchText() {\n  return <span className="animate-glitch">SYS.INT</span>\n}`,
+          },
+        ],
         access: "pro",
       },
     ],

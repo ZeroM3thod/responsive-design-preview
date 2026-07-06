@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, ChevronRight, ExternalLink, Boxes, Lock } from "lucide-react"
+import { Plus, Trash2, ChevronRight, ExternalLink, Boxes, Lock, Download, FileCode, X } from "lucide-react"
 import { AdminHeader } from "@/components/admin/admin-shell"
-import { useAdmin, type AccessLevel } from "@/lib/admin-store"
+import { useAdmin, type AccessLevel, type CodeFile } from "@/lib/admin-store"
+import { ASSET_ICON_NAMES, AssetIcon } from "@/lib/asset-icons"
 
 const ACCESS_OPTIONS: { id: AccessLevel; label: string }[] = [
   { id: "free", label: "Free" },
@@ -134,25 +135,46 @@ export default function AssetsPage() {
                         key={sub.id}
                         className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-mono">{sub.name}</span>
-                            <span
-                              className={`px-1.5 py-0.5 text-[8px] font-mono uppercase tracking-widest ${accessBadge[sub.access]}`}
-                            >
-                              {sub.access}
-                            </span>
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground/30 text-[#ea580c]">
+                            <AssetIcon name={sub.icon} size={15} strokeWidth={1.5} />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[12px] font-mono">{sub.name}</span>
+                              <span
+                                className={`px-1.5 py-0.5 text-[8px] font-mono uppercase tracking-widest ${accessBadge[sub.access]}`}
+                              >
+                                {sub.access}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[8px] font-mono uppercase tracking-widest text-muted-foreground">
+                                <FileCode size={10} /> {sub.codeFiles.length} file
+                                {sub.codeFiles.length === 1 ? "" : "s"}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              {sub.previewLink && (
+                                <a
+                                  href={sub.previewLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[9px] font-mono text-muted-foreground hover:text-[#ea580c] transition-colors"
+                                >
+                                  <ExternalLink size={10} /> {sub.previewLink}
+                                </a>
+                              )}
+                              {sub.zipLink && (
+                                <a
+                                  href={sub.zipLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[9px] font-mono text-muted-foreground hover:text-[#ea580c] transition-colors"
+                                >
+                                  <Download size={10} /> {sub.zipLink}
+                                </a>
+                              )}
+                            </div>
                           </div>
-                          {sub.previewLink && (
-                            <a
-                              href={sub.previewLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 inline-flex items-center gap-1 text-[9px] font-mono text-muted-foreground hover:text-[#ea580c] transition-colors"
-                            >
-                              <ExternalLink size={10} /> {sub.previewLink}
-                            </a>
-                          )}
                         </div>
                         <button
                           onClick={() => removeSubButton(main.id, sub.id)}
@@ -180,18 +202,49 @@ function SubButtonForm({
   onSubmit,
   onCancel,
 }: {
-  onSubmit: (sub: { name: string; previewLink: string; code: string; access: AccessLevel }) => void
+  onSubmit: (sub: {
+    name: string
+    icon: string
+    previewLink: string
+    zipLink: string
+    codeFiles: CodeFile[]
+    access: AccessLevel
+  }) => void
   onCancel: () => void
 }) {
   const [name, setName] = useState("")
+  const [icon, setIcon] = useState<string>(ASSET_ICON_NAMES[0])
   const [previewLink, setPreviewLink] = useState("")
-  const [code, setCode] = useState("")
+  const [zipLink, setZipLink] = useState("")
+  const [codeFiles, setCodeFiles] = useState<CodeFile[]>([
+    { id: `cf${Date.now()}`, name: "", code: "" },
+  ])
   const [access, setAccess] = useState<AccessLevel>("free")
+
+  function updateFile(id: string, patch: Partial<CodeFile>) {
+    setCodeFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
+  }
+  function addFile() {
+    setCodeFiles((prev) => [...prev, { id: `cf${Date.now()}`, name: "", code: "" }])
+  }
+  function removeFile(id: string) {
+    setCodeFiles((prev) => (prev.length === 1 ? prev : prev.filter((f) => f.id !== id)))
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    onSubmit({ name: name.trim(), previewLink: previewLink.trim(), code, access })
+    const cleanFiles = codeFiles
+      .map((f) => ({ ...f, name: f.name.trim(), code: f.code }))
+      .filter((f) => f.name || f.code)
+    onSubmit({
+      name: name.trim(),
+      icon,
+      previewLink: previewLink.trim(),
+      zipLink: zipLink.trim(),
+      codeFiles: cleanFiles.length ? cleanFiles : [{ id: `cf${Date.now()}`, name: "untitled.tsx", code: "" }],
+      access,
+    })
   }
 
   const field = "w-full border-2 border-foreground bg-background px-3 py-2 text-[12px] font-mono outline-none focus:border-[#ea580c] transition-colors"
@@ -215,20 +268,96 @@ function SubButtonForm({
         </div>
       </div>
 
+      {/* Icon picker */}
       <div>
-        <label className={labelCls}>{"// 3. Code"}</label>
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Paste component code here..."
-          rows={5}
-          className={`${field} resize-y bg-[#0d0d0d] text-[#e6e6e6]`}
+        <label className={labelCls}>{"// 3. Icon"}</label>
+        <div className="flex flex-wrap gap-1.5 border-2 border-foreground bg-background p-2">
+          {ASSET_ICON_NAMES.map((iconName) => {
+            const active = icon === iconName
+            return (
+              <button
+                key={iconName}
+                type="button"
+                onClick={() => setIcon(iconName)}
+                aria-label={iconName}
+                title={iconName}
+                className={`flex h-9 w-9 items-center justify-center border transition-colors ${
+                  active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-foreground/20 hover:border-[#ea580c] hover:text-[#ea580c]"
+                }`}
+              >
+                <AssetIcon name={iconName} size={16} strokeWidth={1.5} />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Zip download link */}
+      <div>
+        <label className={labelCls}>
+          <Download size={10} className="inline mr-1 -mt-0.5 text-[#ea580c]" /> {"4. ZIP Download Link"}
+        </label>
+        <input
+          value={zipLink}
+          onChange={(e) => setZipLink(e.target.value)}
+          placeholder="https://.../component.zip"
+          className={field}
         />
+      </div>
+
+      {/* Multiple code files */}
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
+            {"// 5. Code Files"}
+          </label>
+          <button
+            type="button"
+            onClick={addFile}
+            className="flex items-center gap-1.5 border border-foreground/30 px-2.5 py-1.5 text-[9px] font-mono uppercase tracking-widest hover:bg-foreground/5 transition-colors"
+          >
+            <Plus size={12} strokeWidth={2} /> Add File
+          </button>
+        </div>
+        <div className="space-y-3">
+          {codeFiles.map((file, i) => (
+            <div key={file.id} className="border-2 border-foreground">
+              <div className="flex items-center gap-2 border-b-2 border-foreground bg-background px-2 py-1.5">
+                <FileCode size={13} strokeWidth={1.5} className="shrink-0 text-[#ea580c]" />
+                <input
+                  value={file.name}
+                  onChange={(e) => updateFile(file.id, { name: e.target.value })}
+                  placeholder={`file-${i + 1}.tsx`}
+                  className="flex-1 bg-transparent text-[11px] font-mono outline-none"
+                />
+                {codeFiles.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFile(file.id)}
+                    aria-label="Remove file"
+                    className="flex h-6 w-6 items-center justify-center border border-foreground/30 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  >
+                    <X size={12} strokeWidth={1.5} />
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={file.code}
+                onChange={(e) => updateFile(file.id, { code: e.target.value })}
+                placeholder="Paste component code here..."
+                rows={5}
+                className="w-full resize-y bg-[#0d0d0d] px-3 py-2 text-[12px] font-mono text-[#e6e6e6] outline-none"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div>
         <label className={labelCls}>
-          <Lock size={10} className="inline mr-1 -mt-0.5 text-[#ea580c]" /> {"4. Access Level"}
+          <Lock size={10} className="inline mr-1 -mt-0.5 text-[#ea580c]" /> {"6. Access Level"}
         </label>
         <div className="flex flex-wrap border-2 border-foreground w-fit">
           {ACCESS_OPTIONS.map((opt, i) => {
