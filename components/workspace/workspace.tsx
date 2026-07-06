@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -334,19 +334,41 @@ function PreviewFrame({
 /* -------------------------------- Code view ------------------------------- */
 
 function CodeView({ fileName, code }: { fileName: string; code: string }) {
+  const files = [
+    { name: fileName, code },
+    {
+      name: "README.md",
+      code: `# ${fileName}\n\nExported from the SYS.INT UI Library.\n\n## Usage\n\n1. Copy \`${fileName}\` into your \`components\` directory.\n2. Import and render the component:\n\n\`\`\`tsx\nimport { Component } from "@/components/${fileName.replace(/\.[^.]+$/, "")}"\n\`\`\`\n\n## Notes\n\n- Built with Tailwind CSS and the brutalist SYS.INT design tokens.\n- Requires \`lucide-react\` for icons where applicable.\n`,
+    },
+  ]
+  const [activeFile, setActiveFile] = useState(0)
+
+  // Reset to the first tab whenever the selected component changes.
+  useEffect(() => {
+    setActiveFile(0)
+  }, [fileName])
+
   return (
     <div className="mx-auto w-full max-w-4xl border-2 border-foreground bg-[#0d0d0d] text-[#e6e6e6]">
       {/* File tab list */}
       <div className="flex items-center border-b-2 border-foreground/50">
-        <span className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest bg-[#ea580c] text-white">
-          {fileName}
-        </span>
-        <span className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-white/40">
-          README.md
-        </span>
+        {files.map((file, i) => {
+          const active = activeFile === i
+          return (
+            <button
+              key={file.name}
+              onClick={() => setActiveFile(i)}
+              className={`px-4 py-2 text-[10px] font-mono uppercase tracking-widest transition-colors ${
+                i > 0 ? "border-l border-foreground/30" : ""
+              } ${active ? "bg-[#ea580c] text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+            >
+              {file.name}
+            </button>
+          )
+        })}
       </div>
       <pre className="overflow-x-auto p-4 text-[12px] leading-relaxed font-mono">
-        <code>{code}</code>
+        <code>{files[activeFile].code}</code>
       </pre>
     </div>
   )
