@@ -23,8 +23,10 @@ export type Payment = {
   userEmail: string
   requestedPlan: Exclude<Plan, "free">
   amount: number
-  method: string
-  reference: string
+  coin: string
+  network: string
+  depositAddress: string
+  txId: string
   status: "pending" | "approved" | "rejected"
   submittedAt: string
 }
@@ -51,6 +53,50 @@ export type AssetMainButton = {
   subButtons: AssetSubButton[]
 }
 
+/* --------------------------- Crypto config --------------------------- */
+
+export type CryptoOption = {
+  coin: string
+  networks: { name: string; address: string }[]
+}
+
+// Supported coins, their blockchain networks, and the deposit address per network.
+export const CRYPTO_OPTIONS: CryptoOption[] = [
+  {
+    coin: "USDT",
+    networks: [
+      { name: "BEP-20", address: "0x7C4a2f19bE8d3aF5c1092Db4E6f8A0d21B93c7E4" },
+      { name: "TRC-20", address: "TJYeasT4rN8gYq2Qp9v3H1cKfW6mLxZ7dR" },
+      { name: "ERC-20", address: "0x9d2C71fA0e5B48630aF1c7E2b9D50648fC3a1B02" },
+    ],
+  },
+  {
+    coin: "USDC",
+    networks: [
+      { name: "BEP-20", address: "0x2Fb7A19c83E4d60597aB1c3F7e2D905648fC1a0B" },
+      { name: "ERC-20", address: "0x3Ab9F1c72E4d80596aB1c3F7e2D905648fC1a0B3" },
+    ],
+  },
+  {
+    coin: "BTC",
+    networks: [{ name: "Bitcoin", address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" }],
+  },
+  {
+    coin: "ETH",
+    networks: [{ name: "ERC-20", address: "0x5C1a2f19bE8d3aF5c1092Db4E6f8A0d21B93c7A9" }],
+  },
+  {
+    coin: "BNB",
+    networks: [{ name: "BEP-20", address: "0x8D4a2f19bE8d3aF5c1092Db4E6f8A0d21B93c7F1" }],
+  },
+]
+
+// Price per plan in USD.
+export const PLAN_PRICES: Record<Exclude<Plan, "free">, number> = {
+  pro: 19,
+  professional: 49,
+}
+
 /* ------------------------------ Seed data ---------------------------- */
 
 const seedUsers: AdminUser[] = [
@@ -68,9 +114,11 @@ const seedPayments: Payment[] = [
     userName: "Maria Voss",
     userEmail: "maria@sys.int",
     requestedPlan: "pro",
-    amount: 29,
-    method: "Bank Transfer",
-    reference: "TXN-88213",
+    amount: 19,
+    coin: "USDT",
+    network: "BEP-20",
+    depositAddress: "0x7C4a2f19bE8d3aF5c1092Db4E6f8A0d21B93c7E4",
+    txId: "0x9f3a1c7e28b5d604a1f8c2e93b7d05a6f4c1e8290bd374a5e6f19c2b7d048a51",
     status: "pending",
     submittedAt: "2026-06-30",
   },
@@ -80,9 +128,11 @@ const seedPayments: Payment[] = [
     userName: "Omar Reyes",
     userEmail: "omar@sys.int",
     requestedPlan: "professional",
-    amount: 79,
-    method: "Crypto (USDC)",
-    reference: "0xA1F9...4C2",
+    amount: 49,
+    coin: "USDT",
+    network: "TRC-20",
+    depositAddress: "TJYeasT4rN8gYq2Qp9v3H1cKfW6mLxZ7dR",
+    txId: "b7e2c9a41f83d6057e0a9c2b1d84f6a3e5c70d19b28f4a6c3e91d7502fa63b8c4",
     status: "pending",
     submittedAt: "2026-07-04",
   },
@@ -92,9 +142,11 @@ const seedPayments: Payment[] = [
     userName: "Alex Chen",
     userEmail: "alex@sys.int",
     requestedPlan: "pro",
-    amount: 29,
-    method: "Card",
-    reference: "ch_1P9x2",
+    amount: 19,
+    coin: "USDC",
+    network: "ERC-20",
+    depositAddress: "0x3Ab9F1c72E4d80596aB1c3F7e2D905648fC1a0B3",
+    txId: "0x1d4f7a2c9e5b8306f1a0c7e2b9d4536a8f0c1e7290b3d5a6f4c8e1902bd73a56",
     status: "approved",
     submittedAt: "2025-11-02",
   },
