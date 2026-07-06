@@ -63,7 +63,7 @@ export function Navbar() {
           >
             <ThemeToggle />
             <Link
-              href="/template"
+              href="/signin"
               className="hidden sm:block text-xs font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               Log In
